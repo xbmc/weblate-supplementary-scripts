@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+import argparse
 import fnmatch
 import json
 import os
 import re
-import sys
 
 GET_VERSION = re.compile(r'''<addon.+?version="(?P<version>[0-9.]+)"''', re.DOTALL)
 
@@ -29,6 +29,16 @@ def is_po_modified(chg_files):
     return payload != []
 
 
+def modified_languages(chg_files):
+    payload = []
+    for chg_file in chg_files:
+        if 'resource.language.' in chg_file and chg_file.endswith('strings.po'):
+            folder = os.path.split(chg_file)[0]
+            payload.append(folder.split('/')[-1].replace('resource.language.', ''))
+
+    return ', '.join(payload)
+
+
 def walk(directory, pattern):
     for root, dirs, files in os.walk(directory):
         for basename in files:
@@ -43,20 +53,72 @@ def find_addon_xml():
         return filename
 
 
-def update_addon_xml():
-    addon_xml = find_addon_xml()
+def find_changelog():
+    for filename in walk('.', 'changelog.txt'):
+        print('Found changelog.txt:', filename)
+        return filename
 
+
+def update_changelog(version, chg_files):
+    changelog = find_changelog()
+    if not changelog:
+        return
+
+    updated_languages = modified_languages(chg_files)
+
+    changelog_string = 'v{version}\nTranslations updates from Weblate\n\t- {languages}\n\n'.format(
+        version=version,
+        languages=updated_languages
+    )
+
+    print('Writing changelog.txt:\n\'\'\'\n{lines}\'\'\''.format(lines=changelog_string))
+    with open(changelog, 'r+') as f:
+        content = f.read()
+        f.seek(0, 0)
+        f.write(changelog_string + content)
+
+
+def update_news(addon_xml, version, chg_files):
+    xml_content = read_addon_xml(addon_xml)
+
+    updated_languages = modified_languages(chg_files)
+
+    changelog_string = 'v{version}\nTranslations updates from Weblate\n\t- {languages}\n\n'.format(
+        version=version,
+        languages=updated_languages
+    )
+
+    print('Writing news to addon.xml.in:\n\'\'\'\n{lines}\'\'\''.format(lines=changelog_string))
+
+    new_xml_content = xml_content.replace('<news>', '<news>\n{lines}'.format(
+        lines=changelog_string
+    ))
+
+    new_xml_content = new_xml_content.replace('\n\n\n', '\n\n')
+
+    with open(addon_xml, 'w') as open_file:
+        open_file.write(new_xml_content)
+
+    print('')
+
+
+def read_addon_xml(addon_xml):
     print('Reading {filename}'.format(filename=addon_xml))
-    with open(addon_xml, 'r') as open_file:
-        xml_content = open_file.read()
 
+    with open(addon_xml, 'r') as open_file:
+        return open_file.read()
+
+
+def current_version(xml_content):
     version_match = GET_VERSION.search(xml_content)
     if not version_match:
         print('Unable to determine current version... skipping.', '')
         return
 
-    old_version = version_match.group('version')
-    new_version = increment_version(old_version)
+    return version_match.group('version')
+
+
+def update_addon_xml(addon_xml, xml_content, old_version, new_version):
     print('\tOld Version: {version}'.format(version=old_version))
     print('\tNew Version: {version}'.format(version=new_version))
 
@@ -77,19 +139,22 @@ def update_addon_xml():
 
 
 def main():
-    argv = sys.argv
-    if len(argv) == 1:
-        print('No argument provided.')
-        exit(0)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('json', type=str, help='Path to files.json')
 
-    arg = argv[1]
+    parser.add_argument('-c', '--update-changelog', action='store_true',
+                        help='Update changelog with translation changes')
+    parser.add_argument('-n', '--update-news', action='store_true',
+                        help='Update addon.xml.in news with translation changes')
 
-    if arg.endswith('.json'):
-        with open(arg, 'r') as open_file:
+    args = parser.parse_args()
+
+    if args.json.endswith('.json'):
+        with open(args.json, 'r') as open_file:
             changed_files = json.load(open_file)
 
     else:
-        print('No valid argument provided, expected "path to changed files json".')
+        print('No valid argument provided, expected a path to changed files json.')
         exit(0)
 
     modified = is_po_modified(changed_files)
@@ -99,7 +164,18 @@ def main():
 
     print('')
 
-    update_addon_xml()
+    addon_xml = find_addon_xml()
+    xml_content = read_addon_xml(addon_xml)
+    old_version = current_version(xml_content)
+    new_version = increment_version(old_version)
+
+    update_addon_xml(addon_xml, xml_content, old_version, new_version)
+
+    if args.update_changelog:
+        update_changelog(new_version, changed_files)
+
+    if args.update_news:
+        update_news(addon_xml, new_version, changed_files)
 
     print('')
 
