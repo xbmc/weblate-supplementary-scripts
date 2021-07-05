@@ -83,7 +83,7 @@ def update_news(addon_xml, version, chg_files):
 
     updated_languages = modified_languages(chg_files)
 
-    changelog_string = 'v{version}\nTranslations updates from Weblate\n\t- {languages}\n\n'.format(
+    changelog_string = 'v{version}\n- Translations updates from Weblate\n\t- {languages}\n\n'.format(
         version=version,
         languages=updated_languages
     )
