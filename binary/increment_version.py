@@ -5,6 +5,9 @@ import json
 import os
 import re
 
+from datetime import date
+
+TODAY = date.today().isoformat()
 GET_VERSION = re.compile(r'''<addon.+?version="(?P<version>[0-9.]+)"''', re.DOTALL)
 
 
@@ -59,17 +62,25 @@ def find_changelog():
         return filename
 
 
-def update_changelog(version, chg_files):
+def create_changelog_string(version, languages, add_date=False):
+    version_string = 'v{version}'.format(version=version)
+    if add_date:
+        version_string += ' ({today})'.format(today=TODAY)
+
+    return '{version}\nTranslations updates from Weblate\n\t- {languages}\n\n'.format(
+        version=version_string,
+        languages=languages
+    )
+
+
+def update_changelog(version, chg_files, add_date=False):
     changelog = find_changelog()
     if not changelog:
         return
 
     updated_languages = modified_languages(chg_files)
 
-    changelog_string = 'v{version}\n- Translations updates from Weblate\n\t- {languages}\n\n'.format(
-        version=version,
-        languages=updated_languages
-    )
+    changelog_string = create_changelog_string(version, updated_languages, add_date)
 
     print('Writing changelog.txt:\n\'\'\'\n{lines}\'\'\''.format(lines=changelog_string))
     with open(changelog, 'r+') as f:
@@ -78,15 +89,12 @@ def update_changelog(version, chg_files):
         f.write(changelog_string + content)
 
 
-def update_news(addon_xml, version, chg_files):
+def update_news(addon_xml, version, chg_files, add_date=False):
     xml_content = read_addon_xml(addon_xml)
 
     updated_languages = modified_languages(chg_files)
 
-    changelog_string = 'v{version}\n- Translations updates from Weblate\n\t- {languages}\n\n'.format(
-        version=version,
-        languages=updated_languages
-    )
+    changelog_string = create_changelog_string(version, updated_languages, add_date)
 
     print('Writing news to addon.xml.in:\n\'\'\'\n{lines}\'\'\''.format(lines=changelog_string))
 
@@ -144,6 +152,10 @@ def main():
 
     parser.add_argument('-c', '--update-changelog', action='store_true',
                         help='Update changelog with translation changes')
+
+    parser.add_argument('-d', '--add-date', action='store_true',
+                        help='Add date to version number in changelog and news. ie. "v1.0.1 (2021-7-17)"')
+
     parser.add_argument('-n', '--update-news', action='store_true',
                         help='Update addon.xml.in news with translation changes')
 
@@ -172,10 +184,10 @@ def main():
     update_addon_xml(addon_xml, xml_content, old_version, new_version)
 
     if args.update_changelog:
-        update_changelog(new_version, changed_files)
+        update_changelog(new_version, changed_files, args.add_date)
 
     if args.update_news:
-        update_news(addon_xml, new_version, changed_files)
+        update_news(addon_xml, new_version, changed_files, args.add_date)
 
     print('')
 
