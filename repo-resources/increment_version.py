@@ -1,4 +1,14 @@
 # -*- coding: utf-8 -*-
+"""
+Increment the version of all language add-ons that have changed files (strings.po/langinfo.xml)
+
+usage: increment_version.py {all,<path to files.json>}
+
+positional arguments:
+  {all,<path to files.json>}    Increment "all" languages or all languages in the files.json
+
+"""
+
 import json
 import os
 import re
@@ -8,12 +18,26 @@ GET_VERSION = re.compile(r'''<addon.+?version="(?P<version>[0-9.]+)"''', re.DOTA
 
 
 def increment_version(version):
+    """
+    Increment the provided version number (micro)
+    :param version: version number to increment in format '1.0.0'
+    :type version: str
+    :return: incremented version number
+    :rtype: str
+    """
     version = version.split('.')
     version[2] = str(int(version[2]) + 1)
     return '.'.join(version)
 
 
 def get_language_folders(chg_files):
+    """
+    Get the language folders from the list of changed files
+    :param chg_files: changed files with path
+    :type chg_files: list
+    :return: languages folders that contained changed files ie. resource.language.en_gb
+    :rtype: list
+    """
     payload = []
     for chg_file in chg_files:
         if chg_file.startswith('resource.language') and \
@@ -29,6 +53,11 @@ def get_language_folders(chg_files):
 
 
 def update_addon_xmls(lang_folders):
+    """
+    Update all addon.xml's in language folders
+    :param lang_folders: language folders that contained changed files
+    :type lang_folders: list
+    """
     addon_xmls = ['/'.join(['.', folder, 'addon.xml']) for folder in lang_folders]
 
     for addon_xml in addon_xmls:
@@ -62,7 +91,7 @@ def update_addon_xmls(lang_folders):
         print('')
 
 
-if __name__ == '__main__':
+def main():
     argv = sys.argv
     if len(argv) == 1:
         print('No argument provided.')
@@ -91,3 +120,7 @@ if __name__ == '__main__':
     update_addon_xmls(language_folders)
 
     print('')
+
+
+if __name__ == '__main__':
+    main()
