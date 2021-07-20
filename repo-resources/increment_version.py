@@ -91,7 +91,7 @@ def update_addon_xmls(lang_folders):
         print('')
 
 
-if __name__ == '__main__':
+def main():
     argv = sys.argv
     if len(argv) == 1:
         print('No argument provided.')
@@ -120,3 +120,7 @@ if __name__ == '__main__':
     update_addon_xmls(language_folders)
 
     print('')
+
+
+if __name__ == '__main__':
+    main()

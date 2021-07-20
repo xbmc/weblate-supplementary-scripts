@@ -224,7 +224,7 @@ def current_version(xml_content):
     version_match = GET_VERSION.search(xml_content)
     if not version_match:
         print('Unable to determine current version... skipping.', '')
-        return
+        return ''
 
     return version_match.group('version')
 
@@ -281,7 +281,7 @@ def main():
 
     else:
         print('No valid argument provided, expected a path to changed files json.')
-        exit(0)
+        exit(1)
 
     modified = is_po_modified(changed_files)
     if not modified:
@@ -292,7 +292,12 @@ def main():
 
     addon_xml = find_addon_xml()
     xml_content = read_addon_xml(addon_xml)
+
     old_version = current_version(xml_content)
+    if not old_version:
+        print('Unable to determine the current version. exiting...')
+        exit(1)
+
     new_version = increment_version(old_version)
 
     update_addon_xml(addon_xml, xml_content, old_version, new_version)
