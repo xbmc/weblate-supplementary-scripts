@@ -1,4 +1,5 @@
 name: Increment version when languages are updated
+# Increment the version of a binary add-on when languages are updated, add language changes to the changelog and news
 
 on:
   push:
@@ -13,12 +14,14 @@ jobs:
 
     steps:
 
+      # Checkout the current repository into a directory (repositories name)
       - name: Checkout Repository
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
           path: ${{ github.event.repository.name }}
 
+      # Checkout the required scripts from xbmc/weblate-supplementary-scripts into the 'scripts' directory
       - name: Checkout Scripts
         uses: actions/checkout@v2
         with:
@@ -26,22 +29,30 @@ jobs:
           repository: xbmc/weblate-supplementary-scripts
           path: scripts
 
+      # Install all dependencies required by the following steps
+      # - libxml2-utils, xmlstarlet: reading version from addon.xml.in
+      - name: Install dependencies
+        run: |
+          sudo apt-get install libxml2-utils xmlstarlet
+
+      # Setup python version 3.9
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.9'
 
+      # Generate files.json containing a list of files that were changed in the triggering commit
       - name: Get changed files
         uses: trilom/file-changes-action@v1.2.4
 
-      - name: Increment add-on version 
+      # Run the python script to increment the version, changelog and news
+      - name: Increment add-on version
         run: |
           python3 ../scripts/binary/increment_version.py $HOME/files.json -c -n
         working-directory: ${{ github.event.repository.name }}
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get install libxml2-utils xmlstarlet
+      # Create the variables required by the following steps
+      # - steps.required-variables.outputs.version: version element from addon.xml.in
       - name: Get required variables
         id: required-variables
         run: |
@@ -49,6 +60,9 @@ jobs:
           echo ::set-output name=version::$version
         working-directory: ${{ github.event.repository.name }}
 
+      # Create a PR with the incremented version and changelog updates
+      # - title/commit message: Add-on version incremented to {steps.required-variables.outputs.version} from Weblate
+      # - body: Language add-on versions incrementing triggered by {github.sha}
       - name: Create PR for incremented versions
         uses: peter-evans/create-pull-request@v3.10.0
         with:
