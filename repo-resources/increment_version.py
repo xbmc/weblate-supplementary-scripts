@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Increment the version of all language add-ons that have changed files (strings.po/langinfo.xml)
+Increment the version of all add-ons that have changed language files (strings.po/langinfo.xml)
 
 usage: increment_version.py {all,<path to files.json>}
 
 positional arguments:
-  {all,<path to files.json>}    Increment "all" languages or all languages in the files.json
+  {all,<path to files.json>}    Increment "all" add-ons or all add-ons with changed language files in the files.json
 
 """
 
@@ -30,35 +30,37 @@ def increment_version(version):
     return '.'.join(version)
 
 
-def get_language_folders(chg_files):
+def get_addon_folders(chg_files):
     """
-    Get the language folders from the list of changed files
+    Get the addon folders from the list of changed files
     :param chg_files: changed files with path
     :type chg_files: list
-    :return: languages folders that contained changed files ie. resource.language.en_gb
+    :return: addon folders that contained changed files ie. resource.language.en_gb or metadata.universal
     :rtype: list
     """
     payload = []
     for chg_file in chg_files:
-        if chg_file.startswith('resource.language') and \
+        if 'resource.language.' in chg_file and \
                 chg_file.endswith(('strings.po', 'langinfo.xml')):
             folder = os.path.split(chg_file)[0]
             payload.append(folder.split('/')[0])
 
-    print('Files were modified in the following languages:')
-    for language in payload:
-        print('\t{language}'.format(language=language))
+    payload = list(set(payload))
+
+    print('Files were modified in the following add-ons:')
+    for addon in payload:
+        print('\t{addon}'.format(addon=addon))
 
     return payload
 
 
-def update_addon_xmls(lang_folders):
+def update_addon_xmls(addon_folders):
     """
-    Update all addon.xml's in language folders
-    :param lang_folders: language folders that contained changed files
-    :type lang_folders: list
+    Update all addon.xml's in addon folders
+    :param addon_folders: addon folders that contained changed files
+    :type addon_folders: list
     """
-    addon_xmls = ['/'.join(['.', folder, 'addon.xml']) for folder in lang_folders]
+    addon_xmls = ['/'.join(['.', folder, 'addon.xml']) for folder in addon_folders]
 
     for addon_xml in addon_xmls:
         print('Reading {filename}'.format(filename=addon_xml))
@@ -110,14 +112,14 @@ def main():
         print('No valid argument provided, expected "all" or "path to changed files json".')
         exit(0)
 
-    language_folders = get_language_folders(changed_files)
-    if not language_folders:
-        print('No modified languages found.')
+    addon_folders = get_addon_folders(changed_files)
+    if not addon_folders:
+        print('No modified add-ons found.')
         exit(0)
 
     print('')
 
-    update_addon_xmls(language_folders)
+    update_addon_xmls(addon_folders)
 
     print('')
 
