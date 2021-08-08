@@ -85,7 +85,7 @@ def modified_languages(chg_files):
             folder = os.path.split(chg_file)[0]
             payload.append(folder.split('/')[-1].replace('resource.language.', ''))
 
-    return ', '.join(payload)
+    return ', '.join(sorted(payload))
 
 
 def walk(directory, pattern):
@@ -115,6 +115,8 @@ def find_addon_xml():
         print('Found addon.xml.in:', filename)
         return filename
 
+    return ''
+
 
 def find_changelog():
     """
@@ -125,6 +127,8 @@ def find_changelog():
     for filename in walk('.', 'changelog.txt'):
         print('Found changelog.txt:', filename)
         return filename
+
+    return ''
 
 
 def create_changelog_string(version, languages, add_date=False):
