@@ -60,15 +60,15 @@ class TestIncrementVersion:
         expected_files_xml = [
             os.path.join(base_path, 'addon.xml.in')
         ]
-        expected_files_po = [
+        expected_files_po = sorted([
             os.path.join(language_path, 'resource.language.en_au', 'strings.po'),
             os.path.join(language_path, 'resource.language.en_gb', 'strings.po'),
             os.path.join(language_path, 'resource.language.en_nz', 'strings.po'),
             os.path.join(language_path, 'resource.language.en_us', 'strings.po'),
-        ]
+        ])
 
         result_files_xml = list(target.walk(FIXTURES_PATH, '*.xml.in'))
-        result_files_po = list(target.walk(FIXTURES_PATH, '*.po'))
+        result_files_po = sorted(list(target.walk(FIXTURES_PATH, '*.po')))
 
         assert expected_files_xml == result_files_xml, 'Expected: {expected}, Actual: {actual}' \
             .format(expected=expected_files_xml, actual=result_files_xml)
