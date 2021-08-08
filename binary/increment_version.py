@@ -187,10 +187,8 @@ def write_changelog(changelog, contents):
     :type contents: str
     """
     print('Writing changelog.txt:\n\'\'\'\n{lines}\'\'\''.format(lines=contents))
-    with open(changelog, 'r+') as f:
-        content = f.read()
-        f.seek(0, 0)
-        f.write(contents + content)
+    with open(changelog, 'w') as f:
+        f.write(contents)
 
 
 def update_news(xml_content, version, chg_files, add_date=False):
