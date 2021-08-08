@@ -153,61 +153,76 @@ def create_changelog_string(version, languages, add_date=False):
     )
 
 
-def update_changelog(version, chg_files, add_date=False):
+def update_changelog(changelog, version, chg_files, add_date=False):
     """
     Update the changelog.txt with a formatted version of the provided information
+    :param changelog: path with filename to changelog.txt
+    :type changelog: str
     :param version: version number being created
     :type version: str
     :param chg_files: changed files with path
     :type chg_files: list
     :param add_date: add date to the version number. ie. v1.0.0 (2021-7-19)
     :type add_date: bool
+    :return: contents of the changelog.txt with new version added
+    :rtype: str
     """
-    changelog = find_changelog()
-    if not changelog:
-        return
 
     updated_languages = modified_languages(chg_files)
 
     changelog_string = create_changelog_string(version, updated_languages, add_date)
 
-    print('Writing changelog.txt:\n\'\'\'\n{lines}\'\'\''.format(lines=changelog_string))
+    with open(changelog, 'r') as f:
+        content = f.read()
+
+    return changelog_string + content
+
+
+def write_changelog(changelog, contents):
+    """
+    Append contents to the top of the changelog
+    :param changelog: path with filename to the changelog.txt
+    :type changelog: str
+    :param contents: contents to be appended to changelog.txt
+    :type contents: str
+    """
+    print('Writing changelog.txt:\n\'\'\'\n{lines}\'\'\''.format(lines=contents))
     with open(changelog, 'r+') as f:
         content = f.read()
         f.seek(0, 0)
-        f.write(changelog_string + content)
+        f.write(contents + content)
 
 
-def update_news(addon_xml, version, chg_files, add_date=False):
+def update_news(xml_content, version, chg_files, add_date=False):
     """
     Update the news element of the addon.xml.in with a formatted version of the provided information
-    :param addon_xml: path with filename to the addon.xml.in
-    :type addon_xml: str
+    :param xml_content: contents of the addon.xml.in
+    :type xml_content: str
     :param version: version number being created
     :type version: str
     :param chg_files: changed files with path
     :type chg_files: list
     :param add_date: add date to the version number. ie. v1.0.0 (2021-7-19)
     :type add_date: bool
+    :return: contents of the addon.xml.in with version updated
+    :rtype: str
     """
-    xml_content = read_addon_xml(addon_xml)
 
     updated_languages = modified_languages(chg_files)
 
     changelog_string = create_changelog_string(version, updated_languages, add_date)
 
-    print('Writing news to addon.xml.in:\n\'\'\'\n{lines}\'\'\''.format(lines=changelog_string))
+    print('Adding news to addon.xml.in:\n\'\'\'\n{lines}\'\'\''.format(lines=changelog_string))
 
     new_xml_content = xml_content.replace('<news>', '<news>\n{lines}'.format(
         lines=changelog_string
     ))
 
+    print('')
+
     new_xml_content = new_xml_content.replace('\n\n\n', '\n\n')
 
-    with open(addon_xml, 'w') as open_file:
-        open_file.write(new_xml_content)
-
-    print('')
+    return new_xml_content
 
 
 def read_addon_xml(addon_xml):
@@ -240,17 +255,17 @@ def current_version(xml_content):
     return version_match.group('version')
 
 
-def update_addon_xml(addon_xml, xml_content, old_version, new_version):
+def update_xml_version(xml_content, old_version, new_version):
     """
     Update the version in the addon.xml.in contents
-    :param addon_xml: path with filename to the addon.xml.in
-    :type addon_xml: str
     :param xml_content: contents of the addon.xml.in
     :type xml_content: str
     :param old_version: the old/current version number
     :type old_version: str
     :param new_version: the new version number
     :type new_version: str
+    :return: contents of the addon.xml.in with version updated
+    :rtype: str
     """
     print('\tOld Version: {version}'.format(version=old_version))
     print('\tNew Version: {version}'.format(version=new_version))
@@ -262,11 +277,22 @@ def update_addon_xml(addon_xml, xml_content, old_version, new_version):
 
     if xml_content == new_xml_content:
         print('XML was unmodified... skipping.', '')
-        return
+        return ''
 
+    return new_xml_content
+
+
+def write_addon_xml(addon_xml, xml_content):
+    """
+    Write the provided xml to the addon.xml.in
+    :param addon_xml: path with filename to the addon.xml.in
+    :type addon_xml: str
+    :param xml_content: contents of the addon.xml.in
+    :type xml_content: str
+    """
     print('Writing {filename}'.format(filename=addon_xml))
     with open(addon_xml, 'w') as open_file:
-        open_file.write(new_xml_content)
+        open_file.write(xml_content)
 
     print('')
 
@@ -311,13 +337,23 @@ def main():
 
     new_version = increment_version(old_version)
 
-    update_addon_xml(addon_xml, xml_content, old_version, new_version)
+    xml_content = update_xml_version(xml_content, old_version, new_version)
+    if not xml_content:
+        print('Unable to update the current version in the addon.xml.in. exiting...')
+        exit(1)
+
+    write_addon_xml(addon_xml, xml_content)
 
     if args.update_changelog:
-        update_changelog(new_version, changed_files, args.add_date)
+        changelog = find_changelog()
+        if changelog:
+            changelog_contents = update_changelog(changelog, new_version,
+                                                  changed_files, args.add_date)
+            write_changelog(changelog, changelog_contents)
 
     if args.update_news:
-        update_news(addon_xml, new_version, changed_files, args.add_date)
+        xml_content = update_news(xml_content, new_version, changed_files, args.add_date)
+        write_addon_xml(addon_xml, xml_content)
 
     print('')
 

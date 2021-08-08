@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon
+  id="pvr.binary.example"
+  version="7.19.1"
+  name="PVR Binary Example"
+  provider-name="pytest">
+  <requires>@ADDON_DEPENDS@
+    <import addon="inputstream.ffmpegdirect" minversion="1.19.0"/>
+    <import addon="inputstream.adaptive" minversion="2.6.6"/>
+    <import addon="inputstream.rtmp" minversion="3.4.0"/>
+  </requires>
+  <extension
+    point="kodi.pvrclient"
+    library_@PLATFORM@="@LIBRARY_FILENAME@"/>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en_GB">pytest fixture</summary>
+    <disclaimer lang="en_GB">pytest</disclaimer>
+    <platform>@PLATFORM@</platform>
+    <license>GPL-2.0-or-later</license>
+    <forum>https://forum.kodi.tv/forumdisplay.php?fid=</forum>
+    <assets>
+      <icon>icon.png</icon>
+    </assets>
+    <news>
+v7.19.1
+- pytest
+    </news>
+  </extension>
+</addon>
