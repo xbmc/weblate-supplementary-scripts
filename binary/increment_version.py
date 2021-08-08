@@ -1,19 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-Update the changelog, news (optionally) and increment the version of a binary add-on when language files are changed
+    Copyright (C) 2021 TeamKodi
 
-usage: increment_version.py [-h] [-c] [-d] [-n] json
+    This file is part of sync_addon_metadata_translations
 
-positional arguments:
-  json                  Path to files.json
+    SPDX-License-Identifier: GPL-3.0-only
+    See LICENSES/GPL-3.0-only for more information.
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -c, --update-changelog
-                        Update changelog with translation changes
-  -d, --add-date        Add date to version number in changelog and news. ie.
-                        "v1.0.1 (2021-7-17)"
-  -n, --update-news     Update addon.xml.in news with translation changes
+    Update the changelog, news (optionally) and increment the version of a binary add-on when language files are changed
+
+    usage: increment_version.py [-h] [-c] [-d] [-n] json
+
+    positional arguments:
+      json                  Path to files.json
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -c, --update-changelog
+                            Update changelog with translation changes
+      -d, --add-date        Add date to version number in changelog and news. ie.
+                            "v1.0.1 (2021-7-17)"
+      -n, --update-news     Update addon.xml.in news with translation changes
 
 """
 
