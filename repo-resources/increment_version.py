@@ -74,16 +74,24 @@ def get_addon_folders(chg_files):
     :rtype: list
     """
     payload = []
+    modified_addons = []
     for chg_file in chg_files:
         if 'resource.language.' in chg_file and \
                 chg_file.endswith(('strings.po', 'langinfo.xml')):
-            folder = os.path.split(chg_file)[0]
-            payload.append(folder.split('/')[0])
+            folders_string = os.path.split(chg_file)[0]
+            folders = folders_string.split(os.sep)
+            for idx, folder in enumerate(folders):
+                if folder == 'resources':
+                    modified_addons.append(folders[idx - 1])
+                    payload.append(os.sep.join(folders[:idx]))
+                    break
+            else:
+                payload.append(folders[0])
 
     payload = list(set(payload))
 
     print('Files were modified in the following add-ons:')
-    for addon in payload:
+    for addon in modified_addons:
         print('\t{addon}'.format(addon=addon))
 
     return payload
