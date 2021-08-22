@@ -147,7 +147,7 @@ def create_changelog_string(version, languages, add_date=False):
     if add_date:
         version_string += ' ({today})'.format(today=TODAY)
 
-    return '{version}\nTranslations updates from Weblate\n\t- {languages}\n\n'.format(
+    return '{version}\n- Translations updates from Weblate\n\t- {languages}\n\n'.format(
         version=version_string,
         languages=languages
     )
