@@ -16,7 +16,8 @@ import pytest
 from .. import increment_version as target
 
 FIXTURES_PATH = os.path.join(os.getcwd(), 'tests', 'fixtures')
-CHANGELOG_STRING_TEMPLATE = '{version}\nTranslations updates from Weblate\n\t- {languages}\n\n'
+CHANGELOG_STRING_TEMPLATE = '{version}\n- Translations updates from Weblate\n\t- {languages}\n\n'
+
 
 @pytest.fixture(scope='class')
 def staging(request):
